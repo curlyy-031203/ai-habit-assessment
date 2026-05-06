@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大学生AI学习习惯测评</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #FAFAF8; --surface: #FFFFFF; --surface2: #F4F3EE;
+    --border: rgba(0,0,0,0.1); --border-strong: rgba(0,0,0,0.2);
+    --text-primary: #1A1A18; --text-secondary: #5A5A56; --text-muted: #9A9A94;
+    --blue: #378ADD; --blue-light: #E6F1FB; --blue-text: #0C447C;
+    --teal: #1D9E75; --purple: #7F77DD; --coral: #D85A30; --amber: #BA7517;
+    --red: #E24B4A; --red-text: #A32D2D;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text-primary); min-height: 100vh; padding: 3rem 1rem 5rem; }
+  .container { max-width: 640px; margin: 0 auto; }
+
+  .lang-bar { display: flex; justify-content: flex-end; margin-bottom: 1.5rem; }
+  .lang-toggle { display: flex; gap: 4px; }
+  .lang-btn { background: transparent; border: 0.5px solid var(--border-strong); border-radius: 20px; padding: 4px 14px; font-size: 12px; color: var(--text-secondary); cursor: pointer; font-family: inherit; transition: all 0.15s; }
+  .lang-btn:hover { background: var(--surface); color: var(--text-primary); }
+  .lang-btn.active { background: var(--text-primary); color: var(--bg); border-color: var(--text-primary); }
+
+  .quiz-header { border-bottom: 0.5px solid var(--border); padding-bottom: 1.5rem; margin-bottom: 2rem; }
+  .eyebrow { font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 10px; }
+  .quiz-title { font-family: 'DM Serif Display', Georgia, serif; font-size: 28px; font-weight: 400; line-height: 1.25; margin-bottom: 8px; }
+  .quiz-subtitle { font-size: 13.5px; color: var(--text-secondary); line-height: 1.65; }
+
+  .progress-wrap { margin-bottom: 2rem; }
+  .progress-bar-bg { height: 2px; background: var(--surface2); border-radius: 2px; overflow: hidden; margin-bottom: 6px; }
+  .progress-bar-fill { height: 100%; background: var(--blue); border-radius: 2px; transition: width 0.4s ease; width: 0%; }
+  .progress-label { font-size: 11px; color: var(--text-muted); }
+
+  .dim-section { margin-bottom: 2rem; }
+  .dim-section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; padding-bottom: 0.6rem; border-bottom: 0.5px solid var(--border); }
+  .dim-section-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .dim-section-title { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+
+  .q-block { margin-bottom: 1rem; padding: 1.25rem 1.4rem; background: var(--surface); border: 0.5px solid var(--border); border-radius: 12px; transition: border-color 0.2s; }
+  .q-block.answered { border-color: var(--border-strong); }
+  .q-num { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; }
+  .q-text { font-size: 14.5px; line-height: 1.6; margin-bottom: 1rem; }
+  .options-grid { display: flex; flex-direction: column; gap: 5px; }
+  .opt-btn { text-align: left; padding: 8px 13px; background: var(--surface2); border: 0.5px solid var(--border); border-radius: 8px; font-size: 12.5px; color: var(--text-primary); cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', sans-serif; line-height: 1.45; }
+  .opt-btn:hover:not(.selected):not(.ineligible-opt) { background: #EEEEE8; border-color: var(--border-strong); }
+  .opt-btn.selected { background: var(--blue-light); border-color: #85B7EB; color: var(--blue-text); }
+
+  .ineligible-notice { display: none; margin-top: 10px; padding: 10px 14px; background: #FEF3F2; border: 0.5px solid #FECDC9; border-radius: 8px; font-size: 12.5px; color: #A32D2D; line-height: 1.55; }
+
+  .submit-btn { width: 100%; padding: 14px; background: var(--text-primary); color: var(--bg); border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity 0.2s; letter-spacing: 0.02em; margin-top: 1rem; }
+  .submit-btn:disabled { opacity: 0.3; cursor: default; }
+  .submit-btn:not(:disabled):hover { opacity: 0.82; }
+  .saving-indicator { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 10px; min-height: 18px; }
+  .saving-indicator.success { color: var(--teal); }
+  .saving-indicator.error { color: var(--red-text); }
+
+  #resultWrap { display: none; }
+  .result-type-label { font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  .result-title { font-family: 'DM Serif Display', Georgia, serif; font-size: 30px; font-weight: 400; line-height: 1.2; margin-bottom: 12px; }
+  .result-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.75; margin-bottom: 1.75rem; }
+
+  .dim-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.5rem; }
+  .dim-card { padding: 1rem 1.1rem; background: var(--surface); border: 0.5px solid var(--border); border-radius: 8px; }
+  .dim-label { font-size: 10.5px; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 8px; }
+  .dim-bar-bg { height: 3px; background: var(--surface2); border-radius: 2px; margin-bottom: 6px; overflow: hidden; }
+  .dim-bar-fill { height: 100%; border-radius: 2px; transition: width 0.9s cubic-bezier(.4,0,.2,1); }
+  .dim-score { font-size: 12px; color: var(--text-secondary); }
+
+  .integrity-callout { padding: 1rem 1.25rem; border-left: 2px solid var(--red); background: var(--surface); border-radius: 0 8px 8px 0; margin-bottom: 1.5rem; border-top: 0.5px solid var(--border); border-right: 0.5px solid var(--border); border-bottom: 0.5px solid var(--border); }
+  .integrity-callout.low { border-left-color: var(--teal); }
+  .integrity-label { font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--red-text); margin-bottom: 5px; }
+  .integrity-callout.low .integrity-label { color: #0F6E56; }
+  .integrity-text { font-size: 13px; color: var(--text-primary); line-height: 1.65; }
+
+  .recs-wrap { margin-top: 1.5rem; }
+  .recs-section-title { font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.75rem; margin-top: 1.25rem; }
+  .recs-section-title:first-child { margin-top: 0; }
+  .rec-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+  .rec-item:last-child { border-bottom: none; }
+  .rec-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 7px; }
+  .rec-dot.short { background: var(--blue); }
+  .rec-dot.long { background: var(--purple); }
+  .rec-text { font-size: 13.5px; color: var(--text-secondary); line-height: 1.65; }
+
+  .result-divider { height: 0.5px; background: var(--border); margin: 1.5rem 0; }
+  .ref-note { margin-top: 2rem; padding-top: 1.25rem; border-top: 0.5px solid var(--border); font-size: 11px; color: var(--text-muted); line-height: 1.75; }
+  .retake-btn { margin-top: 1.25rem; background: transparent; border: 0.5px solid var(--border-strong); border-radius: 8px; padding: 9px 18px; font-size: 13px; color: var(--text-secondary); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s; }
+  .retake-btn:hover { background: var(--surface); color: var(--text-primary); }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="lang-bar">
+    <div class="lang-toggle">
+      <button class="lang-btn" onclick="setLang('en')">English</button>
+      <button class="lang-btn active" onclick="setLang('zh')">中文</button>
+    </div>
+  </div>
+
+  <div id="quizWrap">
+    <div class="quiz-header">
+      <p class="eyebrow" id="hEyebrow"></p>
+      <h1 class="quiz-title" id="hTitle"></h1>
+      <p class="quiz-subtitle" id="hSubtitle"></p>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressFill"></div></div>
+      <p class="progress-label" id="progressLabel"></p>
+    </div>
+    <div id="questionsArea"></div>
+    <button class="submit-btn" id="submitBtn" disabled onclick="submitQuiz()"></button>
+    <p class="saving-indicator" id="savingIndicator"></p>
+  </div>
+
+  <div id="resultWrap">
+    <div class="quiz-header">
+      <p class="eyebrow" id="resEyebrow"></p>
+      <h1 class="result-title" id="resTitle"></h1>
+      <p class="result-type-label" id="resTypeLabel"></p>
+    </div>
+    <p class="result-desc" id="resDesc"></p>
+    <div class="dim-grid" id="dimGrid"></div>
+    <div class="integrity-callout" id="integrityCallout">
+      <p class="integrity-label" id="integrityLabel"></p>
+      <p class="integrity-text" id="integrityText"></p>
+    </div>
+    <div class="result-divider"></div>
+    <div class="recs-wrap" id="recsWrap"></div>
+    <p class="ref-note" id="refNote"></p>
+    <button class="retake-btn" id="retakeBtn" onclick="retake()"></button>
+  </div>
+</div>
+
+<script>
+const AIRTABLE_TOKEN   = 'patjOWmDETQZycKr0.836a0fe292b235f46ec33c86052cec6598c02b0befbe165869ce78f8afb1ea45';
+const AIRTABLE_BASE_ID = 'app4Sqq8dzqLML4Wm';
+const AIRTABLE_TABLE   = 'response';
+
+let lang = 'zh';
+const answers = {};
+const dimColors = { PE:'#378ADD', EE:'#1D9E75', HB:'#7F77DD', HM:'#D85A30', FC:'#BA7517', IA:'#E24B4A' };
+const dimOrder = ['PE','EE','HB','HM','FC','IA'];
+
+const t = {
+  zh: {
+    eyebrow: '教育技术研究 · 基于UTAUT2框架',
+    title: '你真正是怎么在学习中使用AI的？',
+    subtitle: '共33题 · 约7分钟 · 深入探索你在五个学习维度上的AI使用模式',
+    submitBtn: '查看我的结果 →',
+    resEyebrow: '你的AI学习者画像',
+    integrityLabelHigh: '学术诚信信号 — 焦虑偏高',
+    integrityLabelLow: '学术诚信信号',
+    shortTermLabel: '本周可以开始做的',
+    longTermLabel: '值得长期培养的',
+    retakeBtn: '重新测试',
+    refNote: '维度对应 Venkatesh et al.（2012）UTAUT2 理论框架：绩效期望、努力期望、习惯、享乐动机、促成条件。学术诚信焦虑构念参考 Bretag（2019）和 Eaton（2021）。本工具为反思性量表，非经效度验证的心理测量工具。',
+    saving: '正在保存你的作答…',
+    saved: '已记录，感谢参与。',
+    saveErr: '保存失败，但结果正常显示。',
+    qOf: (n, tot) => `${n} / ${tot}`,
+    answered: (n, tot) => `已完成 ${n} / ${tot} 题`,
+    ineligibleNotice: '你选择了"否"，本问卷主要面向北京普通高校在读学生，你的数据仍会被记录作参考，欢迎继续完成。',
+    dimLabels: { PE:'绩效期望', EE:'努力期望', HB:'习惯强度', HM:'享乐动机', FC:'促成条件', IA:'诚信焦虑' },
+    dimSectionLabels: {
+      DM: '基本信息',
+      PE: '第一部分 — 绩效期望',
+      EE: '第二部分 — 努力期望',
+      HB: '第三部分 — 习惯强度',
+      HM: '第四部分 — 享乐动机',
+      FC: '第五部分 — 促成条件',
+      IA: '第六部分 — 学术诚信焦虑',
+    }
+  },
+  en: {
+    eyebrow: 'EdTech Research · UTAUT2-informed instrument',
+    title: 'How do you really use AI in your studies?',
+    subtitle: '33 questions · ~7 min · A deeper look at your AI adoption patterns across five learning dimensions',
+    submitBtn: 'See my results →',
+    resEyebrow: 'Your AI learner profile',
+    integrityLabelHigh: 'Academic integrity signal — elevated concern',
+    integrityLabelLow: 'Academic integrity signal',
+    shortTermLabel: 'Start this week',
+    longTermLabel: 'Worth building over time',
+    retakeBtn: 'Retake assessment',
+    refNote: 'Dimensions mapped to Venkatesh et al. (2012) UTAUT2: performance expectancy, effort expectancy, habit, hedonic motivation, facilitating conditions. Academic integrity anxiety construct adapted from Bretag (2019) and Eaton (2021). Designed as a reflective instrument, not a validated psychometric scale.',
+    saving: 'Saving your response…',
+    saved: 'Response recorded — thank you.',
+    saveErr: 'Could not save response. Your results are still shown.',
+    qOf: (n, tot) => `${n} / ${tot}`,
+    answered: (n, tot) => `${n} of ${tot} answered`,
+    ineligibleNotice: 'You selected "No." This survey is primarily designed for students at regular universities in Beijing — your data will still be recorded as reference. You are welcome to continue.',
+    dimLabels: { PE:'Performance expectancy', EE:'Effort expectancy', HB:'Habit', HM:'Hedonic motivation', FC:'Facilitating conditions', IA:'Integrity anxiety' },
+    dimSectionLabels: {
+      DM: 'Basic Information',
+      PE: 'Section 1 — Performance Expectancy',
+      EE: 'Section 2 — Effort Expectancy',
+      HB: 'Section 3 — Habit',
+      HM: 'Section 4 — Hedonic Motivation',
+      FC: 'Section 5 — Facilitating Conditions',
+      IA: 'Section 6 — Academic Integrity Anxiety',
+    }
+  }
+};
+
+const questions = {
+  zh: [
+    // 人口统计
+    { id:'d1', dim:'DM', type:'demo', text:'您目前是否为北京市普通高等学校的在读学生？', opts:['是','否'], ineligibleOpt: 1 },
+    { id:'d2', dim:'DM', type:'demo', text:'您目前就读的学校属于以下哪一层次？（按学校最高建设层次选择）', opts:['985工程院校（同时为211工程和双一流建设高校）','211工程院校（非985，同时为双一流建设高校）','双一流建设高校（非985、非211）','普通本科院校'] },
+    { id:'d3', dim:'DM', type:'demo', text:'您目前就读的学历层次是？', opts:['本科','硕士研究生','博士研究生','博士后'] },
+    // PE
+    { id:1,  dim:'PE', text:'使用AI工具（如ChatGPT、Kimi等）之后，我的作业或学习成果质量明显提升了。', opts:['完全没有提升，甚至更差了','偶尔有一点提升，不稳定','有一定提升，视任务而定','大多数时候都有明显提升','总是能显著提升，效果非常稳定'] },
+    { id:2,  dim:'PE', text:'使用AI之后，我完成作业的速度变快了。', opts:['完全没有变快，甚至更慢了','偶尔快一点，不明显','有时候快，有时候差不多','大多数时候明显更快','快很多，已经完全改变了我的工作节奏'] },
+    { id:3,  dim:'PE', text:'AI生成的内容作为我进一步思考的起点，是真实有用的。', opts:['几乎没用，经常答非所问','偶尔有用，但质量不稳定','有时候有用，需要筛选','大多数时候是不错的起点','总是很有用，能帮我快速打开思路'] },
+    { id:4,  dim:'PE', text:'在学习中使用AI之后，我对自己提交作品的信心增加了。', opts:['完全没有，甚至更不确定','偶尔有一点信心提升','有时候有，有时候没有','大多数时候信心明显增加','总是让我对成果更有把握'] },
+    { id:5,  dim:'PE', text:'总体来看，AI工具对我这学期的学业表现有实质性帮助。', opts:['完全没有帮助','帮助很有限','有一些帮助，不算显著','帮助比较明显','帮助非常大，是重要的学业支撑'] },
+    // EE
+    { id:6,  dim:'EE', text:'我能写出有效的prompt，不需要太多次尝试就能得到想要的输出。', opts:['很难，通常需要很多次才能得到可用的结果','有点难，需要反复调整','一般，偶尔顺手，偶尔很费劲','比较容易，大多数时候能较快得到满意结果','非常顺手，通常一两次就能拿到我想要的'] },
+    { id:7,  dim:'EE', text:'学习使用新的AI工具或功能，对我来说感觉是可以应对的。', opts:['非常困难，上手很慢，经常放弃','比较难，需要花很多时间摸索','一般，慢慢能搞定，但不轻松','比较容易，上手比较快','非常容易，我通常很快就能掌握新工具'] },
+    { id:8,  dim:'EE', text:'我通常能判断出AI的输出什么时候需要修正或改进。', opts:['几乎不能，我很难判断输出的质量','偶尔能判断，但不确定','有时候能，有时候判断失误','大多数时候判断准确','几乎总是能准确识别问题并知道如何修正'] },
+    { id:9,  dim:'EE', text:'我觉得自己有足够的能力，将AI有效地用于不同类型的学业任务。', opts:['完全没有信心，感觉能力不足','信心有限，只能用于少数简单任务','一般，能用于部分任务','比较有信心，能处理大多数常见任务','非常有信心，能灵活应对各类任务'] },
+    { id:10, dim:'EE', text:'和刚开始使用AI时相比，现在让AI产出我想要的内容所需的努力少多了。', opts:['没有任何进步，和刚开始一样费力','进步很小，还是很费力','有一些进步，但还是需要不少尝试','进步明显，现在顺手多了','进步非常大，现在几乎不费力'] },
+    // HB
+    { id:11, dim:'HB', text:'开始做学业任务时，打开AI工具是我几乎自动会做的事。', opts:['从来不会，我很少想到用AI','偶尔会想到，但经常还是不用','有时候会，有时候不会，没有规律','大多数时候会自动想到并打开','几乎每次都会，已经是固定的第一步'] },
+    { id:12, dim:'HB', text:'如果要完全不借助AI完成一项作业，我会感觉缺少了什么。', opts:['完全不会，没有AI我照样做得很好','偶尔会有一点点这种感觉','有时候会有，有时候没有','大多数时候会明显感觉少了什么','总是会，感觉没有AI很多事很难推进'] },
+    { id:13, dim:'HB', text:'过去一个月，我在学习中每周至少使用生成式AI工具几次。', opts:['几乎没有，上个月基本没用过','偶尔用过一两次','有时候用，频率不固定','大多数周都有用，比较规律','几乎每天都用，已经是日常学习的一部分'] },
+    { id:14, dim:'HB', text:'AI工具已经成为我处理课业的标准配置，而不只是偶尔的选项。', opts:['完全不是，我只是偶尔试试','基本不是，用得很随机','有时候算是，有时候不算','大多数时候是，已经是比较稳定的部分','完全是，我的学习流程里AI已经是固定一环'] },
+    { id:15, dim:'HB', text:'遇到困难的概念或任务时，第一时间找AI是我的本能反应。', opts:['从来不是，我会先自己想或查资料','偶尔是，但不是第一反应','有时候是，要看具体情况','大多数时候是，AI通常是我的首选','几乎总是，遇到困难就直接找AI'] },
+    // HM
+    { id:16, dim:'HM', text:'我真心享受与AI工具互动的过程，不管它有没有用。', opts:['完全不享受，对我来说就是工具，没有乐趣','基本不享受，有点无聊或乏味','中立，说不上喜欢或不喜欢','比较享受，互动过程挺有意思的','非常享受，我很喜欢和AI互动这件事本身'] },
+    { id:17, dim:'HM', text:'探索AI能做什么、不能做什么，对我来说是一种有趣的智识体验。', opts:['完全没有兴趣，感觉很无聊','兴趣不大，不会主动去探索','一般，偶尔会感兴趣','比较有兴趣，经常会主动探索','非常有兴趣，这是我真正喜欢做的事'] },
+    { id:18, dim:'HM', text:'有时候我会出于好奇去用AI，即使当下没有具体的学业需求。', opts:['从来不会，我只在有实际需要时才用','很少，偶尔因为好奇试一下','有时候会，看心情','比较经常，好奇心是我使用AI的重要驱动','非常频繁，我经常纯粹因为好奇去探索AI'] },
+    { id:19, dim:'HM', text:'尝试不同的提问方式或策略，对我来说是有趣的，而不是烦人的。', opts:['非常烦，重复尝试让我很沮丧','有点烦，但能忍','中立，不特别烦也不特别有趣','比较有趣，觉得这个过程挺好玩的','非常有趣，我喜欢把它当成一种探索游戏'] },
+    { id:20, dim:'HM', text:'当我从AI那里得到一个特别好的结果时，我会感到满足感。', opts:['完全没有，输出好不好对我情绪没影响','偶尔会有一点点','有时候有，有时候没有','大多数时候会有明显的满足感','总是会，好的结果让我真的很高兴'] },
+    // FC
+    { id:21, dim:'FC', text:'我的学校或老师已经提供了关于在课业中如何使用AI的明确指引。', opts:['完全没有，这个话题从未被提过','偶尔提到，但非常模糊','有时候有，但不够一致或清晰','大多数课程都有比较清晰的说明','每门课都有明确、具体、一致的AI使用规范'] },
+    { id:22, dim:'FC', text:'我可以在没有明显费用或技术障碍的情况下使用我想用的AI工具。', opts:['很难用到，障碍非常大（费用、访问、网络等）','有比较明显的障碍，但我会想办法克服','有一些小麻烦，但基本能解决','基本没有障碍，大多数时候很顺畅','完全没有障碍，想用就能用'] },
+    { id:23, dim:'FC', text:'在我的学术环境中，有我可以学习如何有效使用AI的人（同学或老师）。', opts:['完全没有，周围没人在认真使用或讨论AI','很少，偶尔能找到一个人聊聊','有一些，但不多','比较多，周围有几个AI用得不错的人','很多，我周围有活跃的AI使用和讨论氛围'] },
+    { id:24, dim:'FC', text:'我的课业和作业结构，使得AI辅助在实际操作上是可行的。', opts:['完全不可行，课业要求几乎不允许AI介入','大多数时候不太适合，AI帮不上太多忙','有时候适合，有时候不适合','大多数课业都适合AI辅助','几乎所有课业都很适合借助AI来完成'] },
+    { id:25, dim:'FC', text:'我有足够的时间和资源去真正学会如何用好AI工具，而不只是浅尝辄止。', opts:['完全没有，时间和精力都不够','时间很有限，只能非常表面地用','有一些时间，但不够系统学习','有比较充裕的时间，能慢慢摸索','时间和资源都充足，我可以认真深入地学'] },
+    // IA
+    { id:26, dim:'IA', text:'我经常不确定自己使用AI的方式是否越过了学术诚信的界限。', opts:['从来不担心，我对自己的使用方式非常确定','很少担心，偶尔在边界模糊时才会想一下','有时候会担心，但不持久','经常担心，这种不确定感比较频繁','几乎总是担心，这是我使用AI时持续存在的焦虑'] },
+    { id:27, dim:'IA', text:'对学术诚信的顾虑让我比本来想用的更少地使用AI工具。', opts:['完全没有影响，我该用就用','偶尔有一点点影响','有时候影响，有时候不影响','经常有明显影响，我因此退缩过多次','影响非常大，这个顾虑严重限制了我的AI使用'] },
+    { id:28, dim:'IA', text:'提交了含有AI辅助的作业后，我有时会担心自己可能做了不该做的事。', opts:['从来不会，提交后我完全不担心这个','很少，只在特别不确定的情况下','有时候会，但很快会过去','经常会，提交后焦虑比较明显','几乎每次都会，是持续的心理负担'] },
+    { id:29, dim:'IA', text:'课程中缺乏关于AI使用的明确规则，让我感到焦虑，而不是自由探索。', opts:['完全不焦虑，没有规则反而让我更自由','基本不焦虑，规则模糊对我影响不大','有时候焦虑，有时候不焦虑','经常感到焦虑，不确定感让我很不舒服','非常焦虑，规则缺失是我学习中持续的压力来源'] },
+    { id:30, dim:'IA', text:'在决定是否对某项任务使用AI时，我会认真考虑学术诚信方面的问题。', opts:['从来不考虑，这不是我决策时的因素','偶尔会考虑一下，但很快就过了','有时候会认真想，有时候不会','大多数时候都会认真考虑这个问题','每次都会，学术诚信是我AI使用决策的核心考量'] },
+  ],
+  en: [
+    { id:'d1', dim:'DM', type:'demo', text:'Are you currently enrolled as a student at a regular university in Beijing?', opts:['Yes','No'], ineligibleOpt: 1 },
+    { id:'d2', dim:'DM', type:'demo', text:'Which tier best describes your university? (Select the highest applicable level)', opts:['985 Project institution (also 211 & Double First-Class)','211 Project institution (non-985, also Double First-Class)','Double First-Class institution (non-985, non-211)','Regular undergraduate institution'] },
+    { id:'d3', dim:'DM', type:'demo', text:'What is your current level of study?', opts:['Undergraduate','Master\'s student','Doctoral student','Postdoctoral researcher'] },
+    // PE
+    { id:1,  dim:'PE', text:'After using AI tools (e.g. ChatGPT, Kimi), the quality of my assignments or study outputs has clearly improved.', opts:['No improvement at all — sometimes even worse','Occasionally a slight improvement, very inconsistent','Some improvement, depends on the task','Noticeable improvement most of the time','Always significantly better — very consistent results'] },
+    { id:2,  dim:'PE', text:'Using AI has made me faster at completing assignments.', opts:['Not faster at all — sometimes slower','Occasionally a little faster, not significant','Sometimes faster, sometimes about the same','Noticeably faster most of the time','Much faster — it has completely changed my pace'] },
+    { id:3,  dim:'PE', text:'AI-generated content is genuinely useful as a starting point for my own thinking.', opts:['Almost never — it often misses the point entirely','Occasionally useful but very inconsistent','Sometimes useful, requires a lot of filtering','Mostly a solid starting point','Always useful — it reliably helps me open up my thinking'] },
+    { id:4,  dim:'PE', text:'Using AI in my studies has increased my confidence in the work I submit.', opts:['Not at all — if anything I feel less certain','Occasionally a slight confidence boost','Sometimes yes, sometimes no','Most of the time my confidence increases noticeably','Always — AI consistently makes me more confident in my output'] },
+    { id:5,  dim:'PE', text:'Overall, AI tools have made a meaningful difference to my academic performance this semester.', opts:['No difference at all','Very limited impact','Some help, but not particularly significant','Fairly significant positive impact','Very significant — AI has been an important academic support'] },
+    // EE
+    { id:6,  dim:'EE', text:'I can write prompts that get me the outputs I need without much trial and error.', opts:['Very hard — I usually need many attempts to get something usable','Somewhat difficult — requires repeated adjustments','Average — sometimes smooth, sometimes a real struggle','Pretty easy — I get satisfying results fairly quickly most of the time','Very easy — usually one or two attempts is all I need'] },
+    { id:7,  dim:'EE', text:'Learning to use a new AI tool or feature feels manageable to me.', opts:['Very difficult — I am slow to pick things up and often give up','Fairly hard — takes a lot of time to figure out','Average — I get there eventually, but it is not smooth','Fairly easy — I pick things up quickly','Very easy — I usually master new tools rapidly'] },
+    { id:8,  dim:'EE', text:'I can usually tell when an AI output needs correction or improvement.', opts:['Almost never — I struggle to judge output quality','Occasionally, but I am often uncertain','Sometimes accurate, sometimes not','Accurate most of the time','Almost always — I can reliably spot problems and know how to fix them'] },
+    { id:9,  dim:'EE', text:'I feel capable enough to use AI effectively across different types of academic tasks.', opts:['No confidence at all — I feel clearly underskilled','Limited confidence — only for a few simple tasks','Moderate — I can handle some tasks','Fairly confident — can manage most common tasks','Very confident — I can adapt flexibly across many task types'] },
+    { id:10, dim:'EE', text:'Compared to when I first started, getting AI to produce what I want now takes much less effort.', opts:['No improvement at all — still as effortful as day one','Very small improvement — still quite hard','Some improvement — but still requires quite a few attempts','Clear improvement — much smoother now','Huge improvement — it feels almost effortless now'] },
+    // HB
+    { id:11, dim:'HB', text:'Opening an AI tool when I start academic work is something I do almost automatically.', opts:['Never — I rarely think to use AI','Occasionally cross my mind, but I usually do not bother','Sometimes yes, sometimes no — no consistent pattern','Most of the time I automatically think of it and open it','Almost every time — it is now a fixed first step'] },
+    { id:12, dim:'HB', text:'If I had to complete an assignment entirely without AI assistance, I would feel like something was missing.', opts:['Not at all — I do just fine without AI','Occasionally a slight feeling, barely noticeable','Sometimes yes, sometimes no','Most of the time I would clearly feel something was lacking','Always — without AI many things feel hard to move forward on'] },
+    { id:13, dim:'HB', text:'Over the past month, I have used generative AI tools in my studies at least several times per week.', opts:['Almost never — I barely used it last month','Once or twice total — very rare','Sometimes, but frequency is inconsistent','Most weeks I used it — fairly regular','Almost every day — it is now part of my daily study routine'] },
+    { id:14, dim:'HB', text:'AI tools have become a standard part of how I approach coursework — not just an occasional option.', opts:['Not at all — I only try it occasionally','Mostly not — my usage is very random','Sometimes feels that way, sometimes not','Most of the time yes — it is a fairly stable part of my process','Completely — AI is now a fixed element of my learning workflow'] },
+    { id:15, dim:'HB', text:'When I encounter a difficult concept or task, reaching for AI is my instinctive first response.', opts:['Never — I always try to think it through or look things up first','Occasionally, but not my first instinct','Sometimes — depends on the situation','Most of the time — AI is usually my first choice','Almost always — my default when I hit something difficult'] },
+    // HM
+    { id:16, dim:'HM', text:'I genuinely enjoy the process of interacting with AI tools, regardless of whether they are useful.', opts:['Not at all — it is purely a tool with zero enjoyment','Mostly not — I find it a bit dull','Neutral — neither enjoy nor dislike it','Fairly enjoyable — the interaction is interesting','Very much — I genuinely love interacting with AI as an experience in itself'] },
+    { id:17, dim:'HM', text:'Exploring what AI can and cannot do is an intellectually interesting experience for me.', opts:['No interest at all — I find it boring','Not much interest — I do not actively explore','Moderate — occasionally find it interesting','Fairly interested — I often explore proactively','Very interested — this is something I genuinely love doing'] },
+    { id:18, dim:'HM', text:'I sometimes use AI tools out of pure curiosity, even without an immediate academic need.', opts:['Never — I only use AI when I have a real practical need','Rarely — occasionally try something out of curiosity','Sometimes — depends on my mood','Fairly often — curiosity is a significant driver of my AI use','Very frequently — I often explore AI purely out of curiosity'] },
+    { id:19, dim:'HM', text:'Trying different prompting approaches is engaging for me, not annoying.', opts:['Very annoying — repeated attempts frustrate me','A bit annoying, but I can tolerate it','Neutral — neither annoying nor engaging','Fairly engaging — I find the process quite fun','Very engaging — I treat it like an exploration game'] },
+    { id:20, dim:'HM', text:'When I get a particularly good result from AI, I feel a genuine sense of satisfaction.', opts:['Not at all — output quality has no emotional impact on me','Occasionally a tiny amount','Sometimes yes, sometimes no','Most of the time I feel a clear sense of satisfaction','Always — a good result genuinely makes me happy'] },
+    // FC
+    { id:21, dim:'FC', text:'My university or instructors have provided clear guidance on how AI may be used in coursework.', opts:['None at all — this topic has never been addressed','Mentioned occasionally, but very vague','Sometimes, but inconsistent or unclear across courses','Most courses have fairly clear explanations','Every course has explicit, specific, and consistent AI use policies'] },
+    { id:22, dim:'FC', text:'I can access the AI tools I want to use without significant cost or technical barriers.', opts:['Very hard to access — major barriers (cost, access, network, etc.)','Significant barriers, but I find workarounds','Some minor friction, but mostly manageable','Mostly no barriers — generally smooth','Completely barrier-free — I can use whatever I want whenever I want'] },
+    { id:23, dim:'FC', text:'In my academic environment, there are people I can learn from about using AI effectively.', opts:['None at all — no one around me seriously uses or discusses AI','Very few — I can occasionally find someone to talk to','A few — but not many','Quite a few — several people around me use AI well','Many — there is an active AI use and discussion culture around me'] },
+    { id:24, dim:'FC', text:'The structure of my coursework makes AI assistance practically viable to use.', opts:['Not viable at all — coursework requirements essentially prevent AI involvement','Mostly not viable — AI rarely helps with what I need to do','Sometimes viable, sometimes not','Most coursework is well-suited to AI assistance','Almost all my coursework lends itself naturally to AI assistance'] },
+    { id:25, dim:'FC', text:'I have enough time and resources to genuinely learn how to use AI tools well, not just superficially.', opts:['None at all — no time or capacity','Very limited time — only very surface-level use possible','Some time, but not enough for systematic learning','Fairly ample time — I can gradually explore and learn','Plenty of time and resources — I can engage deeply and systematically'] },
+    // IA
+    { id:26, dim:'IA', text:'I often feel uncertain about whether my AI usage crosses an academic integrity line.', opts:['Never — I am completely confident about how I use AI','Rarely — only when the situation is genuinely ambiguous','Sometimes — but it does not last long','Often — this uncertainty is fairly frequent','Almost always — it is a persistent anxiety whenever I use AI'] },
+    { id:27, dim:'IA', text:'Concern about academic integrity causes me to use AI less than I otherwise would.', opts:['No impact at all — I use it whenever I want to','Occasionally a slight influence','Sometimes affects me, sometimes not','Often has a clear impact — I have held back multiple times','Very significant impact — this concern substantially limits my AI use'] },
+    { id:28, dim:'IA', text:'After submitting AI-assisted work, I sometimes worry that I may have done something I should not have.', opts:['Never — I feel completely fine after submitting','Rarely — only in genuinely uncertain situations','Sometimes — but it fades quickly','Often — post-submission anxiety is fairly noticeable','Almost every time — it is an ongoing psychological burden'] },
+    { id:29, dim:'IA', text:'The lack of clear AI rules in my courses makes me anxious rather than free to experiment.', opts:['No anxiety at all — ambiguity actually feels freeing','Mostly fine — unclear rules do not bother me much','Sometimes anxious, sometimes not','Often anxious — uncertainty makes me quite uncomfortable','Very anxious — missing rules are a persistent source of stress in my studies'] },
+    { id:30, dim:'IA', text:'When deciding whether to use AI for a specific task, I actively consider academic integrity implications.', opts:['Never — it is not a factor in my decision-making','Occasionally — I think about it briefly then move on','Sometimes I think carefully, sometimes I do not','Most of the time I think about it seriously','Every time — academic integrity is a core consideration in every AI decision I make'] },
+  ]
+};
+
+// ── profiles ──────────────────────────────────────────────────────────────────
+const profiles = {
+  zh: {
+    anxious: {
+      type:'焦虑型使用者', title:'有能力，但内心矛盾',
+      desc:'你的结果显示你在多个维度上有真实的AI使用能力——但学术诚信焦虑在实际行为层面起到了明显的抑制作用。这是目前AI采纳研究中记录最充分的模式之一：AI能力越强的学生往往经历更高程度的诚信顾虑，恰恰是因为他们更清楚边界可能在哪里。这种焦虑并非不理性，它通常准确地反映了你对制度规范中真实模糊地带的敏感，而不是对工具本身的误解。',
+      integrity:'你的诚信顾虑分数高于研究认为会显著中介使用行为的阈值。这种模式在高能力学生中最为突出，尤其是当所在的学业环境对AI规范语焉不详或执行不一致时。',
+      integrityHigh:true,
+      shortRecs:['这周给一位老师发邮件，直接问：在这门课里，什么算是合理的AI使用方式？得到一个清晰的答案，比泛泛的焦虑有用得多。','开始写一个简短的使用记录——每次作业用一句话说明AI参与了什么。这个习惯能建立透明度，显著减少提交后的焦虑。','留意你的顾虑是针对哪类使用方式的（比如起草 vs. 头脑风暴）——把这个区别在脑子里想清楚，是自我澄清的第一步。'],
+      longRecs:['建立一套属于自己的AI使用原则框架：一些你在不同课程中一致遵循的简单标准，这样每次决策就不必重新做一次道德判断。','你对这些问题的敏感性在EdTech语境中其实是一种资产——认真去读一些学术诚信方面的文献，而不只是政策文件，会让这种敏感性更有方向。','从长远来看，在你的课程中倡导更清晰的AI政策。主动提出这件事的学生，往往比他们意识到的更能影响规范的走向。']
+    },
+    strategic: {
+      type:'战略整合型使用者', title:'高度采纳，高度自主',
+      desc:'你已经越过了探索阶段，进入了将AI作为学习工作流一层的一致性、有目的性的使用状态。绩效期望、努力期望、习惯和享乐动机这四个UTAUT2核心驱动因素的高分，使你进入了模型预测中最可能持续使用的画像。在这个阶段，问题不再是要不要用AI，而是如何使用它——以一种继续发展而不是替代自身能力的方式。',
+      integrity:'你的诚信顾虑相对较低。这可能反映了你对什么是合理使用有真实的清晰判断——也可能意味着你还没有遇到过边界真正模糊的情况。两种可能都值得认真对待。',
+      integrityHigh:false,
+      shortRecs:['这周选一项作业，刻意完全不用AI写第一稿，然后再用AI来"压力测试"它。观察有什么变化。','把你最有效的prompt记录在某个地方——一个笔记文件，一个文件夹。你可能正在积累值得明确化的隐性知识。','问一个同学他们对同类任务是怎么用AI的。哪怕一次对话，也经常会让你发现一种完全不同的思路。'],
+      longRecs:['高度习惯化有时会在不知不觉中降低批判性参与度。养成定期自检的习惯："AI是在帮我思考得更好，还是在帮我思考得更少？"','考虑开发可以教给别人的AI辅助工作流——这对EdTech和产品方向的作品集来说是高价值材料。','战略整合型使用者的下一个前沿是元学习：用AI帮助你理解自己的学习模式和盲点，而不只是完成任务。']
+    },
+    skeptic: {
+      type:'选择性怀疑型使用者', title:'知道，但还没有习惯化',
+      desc:'你了解AI工具能做什么，也可能试用过，但它们还没有成为你处理学业任务的默认选项。低习惯强度与中到高绩效期望并存，形成了一个有意思的画像：你能看到价值，但行为还没有自动化。这比无批判式采纳更具反思性——但也意味着你可能在低估一套在你未来所处的环境中越来越重要的能力。',
+      integrity:'你比较谨慎的态度可能让诚信顾虑不会成为主要的焦虑来源。但随着AI使用在学业和职业场景中越来越普遍，提前准备好一套主动框架，会比每次都临时判断更有效。',
+      integrityHigh:false,
+      shortRecs:['这周选一种AI辅助显然合理的任务类型——文献检索、校对、头脑风暴——有意识地去用一次。','做一个小实验：用AI完成一个任务，再不用AI做同类任务，诚实地比较结果。数据比假设可靠。','找到你身边AI用得最流畅的同学，了解他们实际上做了什么——不是他们说的，而是他们的工作流在实践中是什么样的。'],
+      longRecs:['选择性使用往往是高质量使用——但前提是这种选择是刻意的。建立一套清晰的个人判断标准：什么时候AI能增加价值，什么时候只会增加噪音。','Prompting能力是唯一能在不同工具和场景间可靠迁移的AI技能。现在投入进去，即使具体工具变了，收益也会随时间复利增长。','你的怀疑态度是真实的资产——它意味着你不太可能过度依赖AI。挑战在于确保它不会演变成限制你能力发展的回避。']
+    },
+    explorer: {
+      type:'务实探索型使用者', title:'正在走向熟练',
+      desc:'你处于AI采纳的主动学习阶段——在尝试，找到了一些管用的方法，但还在建立属于自己的、关于什么时候用、怎么用这些工具的连贯框架。这是目前生成式AI采纳研究中最常见的画像。努力期望和习惯都还在积累中，这意味着你的体验会有起伏：有时AI感觉真的很有用，有时感觉比不用还麻烦。这种起伏在这个阶段是正常的，随着你积累更多特定任务的经验，它通常会趋于稳定。',
+      integrity:'你的诚信顾虑目前处于可以应对的水平——但随着使用变得更频繁、更一致，提前在每门课里澄清边界，会帮你在不确定感演变成压力之前把它处理掉。',
+      integrityHigh:false,
+      shortRecs:['找出到目前为止AI对你最有用的那一种任务类型，从现在起把它稳定地纳入你处理这类任务的流程。','当AI的输出让你失望时，多花一分钟想想为什么——是prompt不清楚？还是这个任务本身不适合AI？这个诊断习惯能显著加速学习。','这周问一位老师他们对在课程中使用AI的看法——不是为了获得许可，而是因为理解他们的视角能帮你更好地校准自己的判断。'],
+      longRecs:['Prompting技能是你现在能做的回报最高的投资。哪怕只花三十分钟读一读关于提问技巧的内容，也会改变你从这些工具里得到的东西。','慢慢地，尝试为至少两三种任务类型建立稳定的AI工作流——文献辅助、写作反馈、概念解释。一致性比新奇性更能快速建立能力。','留意AI在你的专业和任务类型上不擅长什么。理解它的局限和了解它的优势一样有价值，而大多数人意识到这一点的时间都比应该的晚。']
+    }
+  },
+  en: {
+    anxious: {
+      type:'Anxious adopter', title:'Capable but conflicted',
+      desc:'Your results show genuine AI proficiency across multiple dimensions — but academic integrity anxiety is functioning as a meaningful brake on your actual behavior. This is one of the most well-documented patterns in current AI adoption research: students who are more capable with AI often experience higher integrity concern, precisely because they understand where the lines might be. The anxiety itself is not irrational — it typically reflects accurate sensitivity to real ambiguity in institutional norms.',
+      integrity:'Your integrity concern is elevated above the threshold where research suggests it meaningfully mediates usage behavior. This pattern is strongest among students who are both high-ability and operating in environments where AI norms are unclear or inconsistently enforced.',
+      integrityHigh:true,
+      shortRecs:['Email one instructor this week and ask directly: what counts as appropriate AI use in this course? One clear answer is worth more than general anxiety.','Start a brief usage log — one sentence per assignment noting how AI was involved. This builds transparency and significantly reduces post-submission anxiety.','Notice whether your concern is about specific use types (e.g. drafting vs. ideation) — making that distinction explicit is the first step to self-clarity.'],
+      longRecs:['Develop a personal AI use framework: a simple set of principles you apply consistently across courses, so each decision does not feel like a fresh ethical judgment.','Your sensitivity to these questions is an asset in EdTech contexts — engage seriously with academic integrity literature, not just policy documents.','Over time, advocate for clearer AI policies in your courses. Students who raise this constructively often shape norms more than they realize.']
+    },
+    strategic: {
+      type:'Strategic integrator', title:'High adoption, high intentionality',
+      desc:'You have moved past the experimentation phase into consistent, purposeful use of AI as a layer in your learning workflow. High scores across performance expectancy, effort expectancy, habit, and hedonic motivation place you in the profile that UTAUT2 predicts will show the most sustained usage over time. The question at this stage is less about whether to use AI, and more about using it in ways that continue to develop rather than replace your own capabilities.',
+      integrity:'Your integrity concern is relatively low — this may reflect genuine clarity about appropriate use, or it may mean you have not yet encountered a genuinely ambiguous situation. Both are worth sitting with.',
+      integrityHigh:false,
+      shortRecs:['Choose one assignment this week where you do the first draft entirely without AI, then use AI to stress-test it. Notice what changes.','Document your most effective prompts somewhere. You are likely generating tacit knowledge worth making explicit.','Ask a classmate how they use AI for the same task type. Even one conversation often surfaces a completely different approach.'],
+      longRecs:['High habit strength can gradually reduce critical engagement without you noticing. Build a periodic check-in: "Is AI helping me think better, or helping me think less?"','Consider developing AI-assisted workflows you could teach others — high-value portfolio material for EdTech and product roles.','The next frontier for strategic integrators is meta-learning: using AI to understand your own learning patterns and gaps, not just to complete tasks.']
+    },
+    skeptic: {
+      type:'Selective skeptic', title:'Aware but not yet habituated',
+      desc:'You understand what AI tools can do and have likely tried them, but they have not become a default part of your academic workflow. Low habit strength alongside moderate-to-high performance expectancy creates an interesting profile: you can see the value, but the behavior has not yet become automatic. This is arguably more reflective than uncritical adoption — but it also means you may be underutilizing skills that will matter increasingly in the environments ahead.',
+      integrity:'Your measured approach probably keeps integrity concerns manageable. That said, as AI use becomes more expected, having a proactive framework ready will serve you better than deciding case by case.',
+      integrityHigh:false,
+      shortRecs:['Pick one task type this week where AI assistance is clearly legitimate — literature search, proofreading, brainstorming — and use it deliberately.','Run a small experiment: do one task with AI, do an equivalent task without AI, compare honestly. Data beats assumption.','Find out what your most AI-fluent classmate actually does differently — not what they say, but what their workflow looks like in practice.'],
+      longRecs:['Selective use is often high-quality use — but only if the selection is deliberate. Develop a clear personal heuristic for when AI adds value versus noise.','Prompting fluency is the one AI skill that transfers reliably across tools and contexts. Investing in it now will compound even as specific tools change.','Your skepticism is a genuine asset. The challenge is making sure it does not become avoidance that limits your competence development.']
+    },
+    explorer: {
+      type:'Pragmatic explorer', title:'Building toward fluency',
+      desc:'You are in the active learning phase of AI adoption — trying things, finding some that work, still developing a coherent personal framework for when and how these tools fit. This is the most common profile in current undergraduate AI adoption research. Effort expectancy and habit are still consolidating, which means your experience is variable: sometimes AI feels genuinely useful, sometimes it feels like more work than it saves. That variability is normal at this stage.',
+      integrity:'Your integrity concern is at a manageable level — but as your usage grows more consistent, proactively clarifying boundaries in each course will help you stay ahead of uncertainty before it becomes stress.',
+      integrityHigh:false,
+      shortRecs:['Identify the task type where AI has been most useful to you so far, and make it a consistent part of your process going forward.','When an AI output disappoints you, spend one extra minute figuring out why — unclear prompt? Wrong task type for AI? That diagnostic habit accelerates learning fast.','Ask one instructor this week what they think about AI use in their course — not for permission, but to calibrate your own judgment.'],
+      longRecs:['Prompting skill is the highest-ROI investment you can make right now. Even thirty minutes reading about prompting techniques will change what you get out of these tools.','Develop consistent AI workflows for at least two or three task types. Consistency builds competence faster than novelty.','Pay attention to what AI is not good at for your specific discipline. Understanding its limits is as valuable as knowing its strengths — and most people learn this much later than they should.']
+    }
+  }
+};
+
+// ── logic ─────────────────────────────────────────────────────────────────────
+function calcDim(dim) {
+  const qs = questions[lang].filter(q => q.dim === dim && !q.type);
+  return Math.round(qs.reduce((s, q) => s + (answers[q.id] || 0), 0) / (qs.length * 5) * 100);
+}
+
+function getProfileKey(dims) {
+  const { PE, EE, HB, HM, IA } = dims;
+  const adoption = Math.round((PE + EE + HB + HM) / 4);
+  if (IA >= 65) return 'anxious';
+  if (adoption >= 70) return 'strategic';
+  if (HB <= 40) return 'skeptic';
+  return 'explorer';
+}
+
+function renderQuestions() {
+  const qs = questions[lang];
+  const tr = t[lang];
+  const area = document.getElementById('questionsArea');
+  area.innerHTML = '';
+  let currentDim = null;
+  let mainQNum = 0;
+
+  qs.forEach(q => {
+    if (q.dim !== currentDim) {
+      currentDim = q.dim;
+      const sec = document.createElement('div');
+      sec.className = 'dim-section';
+      sec.id = 'sec-' + q.dim;
+      const color = dimColors[q.dim] || '#9A9A94';
+      sec.innerHTML = `<div class="dim-section-header"><div class="dim-section-dot" style="background:${color}"></div><span class="dim-section-title">${tr.dimSectionLabels[q.dim]}</span></div>`;
+      area.appendChild(sec);
+    }
+
+    const sec = document.getElementById('sec-' + q.dim);
+    const saved = answers[q.id];
+    const isDemo = q.type === 'demo';
+    if (!isDemo) mainQNum++;
+
+    const div = document.createElement('div');
+    div.className = 'q-block' + (saved !== undefined ? ' answered' : '');
+    div.id = 'qb-' + q.id;
+
+    const label = isDemo ? `基本信息 ${['d1','d2','d3'].indexOf(String(q.id))+1}` : tr.qOf(mainQNum, 30);
+
+    div.innerHTML = `
+      <p class="q-num">${label}</p>
+      <p class="q-text">${q.text}</p>
+      <div class="options-grid" id="opts-${q.id}">
+        ${q.opts.map((o, i) => `<button class="opt-btn${saved === i ? ' selected' : ''}" onclick="pick('${q.id}',${i})">${o}</button>`).join('')}
+      </div>
+      ${q.ineligibleOpt !== undefined ? `<p class="ineligible-notice" id="notice-${q.id}">${tr.ineligibleNotice}</p>` : ''}
+    `;
+    sec.appendChild(div);
+  });
+  updateProgress();
+}
+
+function pick(qid, oi) {
+  answers[qid] = oi;
+  document.querySelectorAll(`#opts-${qid} .opt-btn`).forEach((b, i) => b.classList.toggle('selected', i === oi));
+  document.getElementById('qb-' + qid).classList.add('answered');
+
+  // ineligible notice for d1
+  const notice = document.getElementById('notice-' + qid);
+  if (notice) {
+    const q = questions[lang].find(q => String(q.id) === String(qid));
+    notice.style.display = (q && q.ineligibleOpt === oi) ? 'block' : 'none';
+  }
+  updateProgress();
+}
+
+function updateProgress() {
+  const allIds = questions[lang].map(q => q.id);
+  const n = allIds.filter(id => answers[id] !== undefined).length;
+  const total = allIds.length;
+  document.getElementById('progressFill').style.width = (n / total * 100) + '%';
+  document.getElementById('progressLabel').textContent = t[lang].answered(n, total);
+  document.getElementById('submitBtn').disabled = n < total;
+}
+
+async function submitQuiz() {
+  const dims = {};
+  dimOrder.forEach(d => dims[d] = calcDim(d));
+  const profileKey = getProfileKey(dims);
+  const adoption = Math.round((dims.PE + dims.EE + dims.HB + dims.HM) / 4);
+
+  const schoolTier = questions[lang].find(q=>q.id==='d2').opts[answers['d2']] || '';
+  const eduLevel   = questions[lang].find(q=>q.id==='d3').opts[answers['d3']] || '';
+  const isBJ       = answers['d1'] === 0 ? 'yes' : 'no';
+
+  await saveToAirtable({ dims, profileKey, adoption, isBJ, schoolTier, eduLevel });
+  showResult(dims, profileKey);
+}
+
+function showResult(dims, profileKey) {
+  const tr = t[lang];
+  const p = profiles[lang][profileKey];
+
+  document.getElementById('quizWrap').style.display = 'none';
+  document.getElementById('resultWrap').style.display = 'block';
+
+  document.getElementById('resEyebrow').textContent = tr.resEyebrow;
+  document.getElementById('resTitle').textContent = p.title;
+  document.getElementById('resTypeLabel').textContent = p.type;
+  document.getElementById('resDesc').textContent = p.desc;
+  document.getElementById('integrityText').textContent = p.integrity;
+  document.getElementById('integrityLabel').textContent = p.integrityHigh ? tr.integrityLabelHigh : tr.integrityLabelLow;
+  document.getElementById('refNote').textContent = tr.refNote;
+  document.getElementById('retakeBtn').textContent = tr.retakeBtn;
+
+  const ic = document.getElementById('integrityCallout');
+  ic.className = 'integrity-callout' + (p.integrityHigh ? '' : ' low');
+
+  const grid = document.getElementById('dimGrid');
+  grid.innerHTML = '';
+  dimOrder.forEach(d => {
+    const score = dims[d];
+    const card = document.createElement('div');
+    card.className = 'dim-card';
+    card.innerHTML = `
+      <p class="dim-label">${tr.dimLabels[d]}</p>
+      <div class="dim-bar-bg"><div class="dim-bar-fill" style="width:0%;background:${dimColors[d]}" data-w="${score}"></div></div>
+      <p class="dim-score">${score}%</p>`;
+    grid.appendChild(card);
+  });
+  setTimeout(() => document.querySelectorAll('.dim-bar-fill').forEach(b => b.style.width = b.dataset.w + '%'), 80);
+
+  document.getElementById('recsWrap').innerHTML = `
+    <p class="recs-section-title">${tr.shortTermLabel}</p>
+    ${p.shortRecs.map(r=>`<div class="rec-item"><div class="rec-dot short"></div><p class="rec-text">${r}</p></div>`).join('')}
+    <p class="recs-section-title">${tr.longTermLabel}</p>
+    ${p.longRecs.map(r=>`<div class="rec-item"><div class="rec-dot long"></div><p class="rec-text">${r}</p></div>`).join('')}
+  `;
+}
+
+async function saveToAirtable({ dims, profileKey, adoption, isBJ, schoolTier, eduLevel }) {
+  const indicator = document.getElementById('savingIndicator');
+  const tr = t[lang];
+  if (AIRTABLE_TOKEN === 'YOUR_PERSONAL_ACCESS_TOKEN_HERE') return;
+  indicator.textContent = tr.saving;
+  indicator.className = 'saving-indicator';
+  try {
+    const res = await fetch(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${encodeURIComponent(AIRTABLE_TABLE)}`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${AIRTABLE_TOKEN}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ fields: {
+        timestamp:    new Date().toISOString(),
+        language:     lang,
+        profile_type: profileKey,
+        is_student:   isBJ,
+        school_tier:  schoolTier,
+        edu_level:    eduLevel,
+        score_PE: dims.PE, score_EE: dims.EE, score_HB: dims.HB,
+        score_HM: dims.HM, score_FC: dims.FC, score_IA: dims.IA,
+        adoption_avg: adoption
+      }})
+    });
+    if (!res.ok) throw new Error(await res.text());
+    indicator.textContent = tr.saved;
+    indicator.className = 'saving-indicator success';
+  } catch(e) {
+    console.error('Airtable error:', e);
+    indicator.textContent = tr.saveErr;
+    indicator.className = 'saving-indicator error';
+  }
+}
+
+function setLang(l) {
+  lang = l;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.textContent.trim() === (l==='en'?'English':'中文')));
+  document.documentElement.lang = l === 'zh' ? 'zh-CN' : 'en';
+  const tr = t[l];
+  document.getElementById('hEyebrow').textContent  = tr.eyebrow;
+  document.getElementById('hTitle').textContent    = tr.title;
+  document.getElementById('hSubtitle').textContent = tr.subtitle;
+  document.getElementById('submitBtn').textContent = tr.submitBtn;
+  Object.keys(answers).forEach(k => delete answers[k]);
+  renderQuestions();
+}
+
+function retake() {
+  Object.keys(answers).forEach(k => delete answers[k]);
+  document.getElementById('resultWrap').style.display = 'none';
+  document.getElementById('integrityCallout').classList.remove('low');
+  document.getElementById('savingIndicator').textContent = '';
+  document.getElementById('quizWrap').style.display = 'block';
+  renderQuestions();
+}
+
+setLang('zh');
+</script>
+</body>
+</html>
