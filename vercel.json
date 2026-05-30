@@ -1,0 +1,17 @@
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "frame-ancestors 'self' https://curlyy-031203.github.io"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "ALLOW-FROM https://curlyy-031203.github.io"
+        }
+      ]
+    }
+  ]
+}
